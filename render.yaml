@@ -1,0 +1,32 @@
+services:
+  # Backend Flask API
+  - type: web
+    name: t3-chat-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT src.main:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: t3-chat-db
+          property: connectionString
+
+  # Frontend React App  
+  - type: web
+    name: t3-chat-frontend
+    env: node
+    buildCommand: "cd t3-chat-clone && npm install && npm run build"
+    staticPublishPath: "./t3-chat-clone/dist"
+    envVars:
+      - key: VITE_API_URL
+        value: https://t3-chat-api.onrender.com
+
+databases:
+  - name: t3-chat-db
+    databaseName: t3_chat
+    user: t3_user
+

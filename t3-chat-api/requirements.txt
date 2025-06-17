@@ -1,0 +1,10 @@
+flask
+flask-cors
+flask-jwt-extended
+flask-sqlalchemy
+bcrypt
+openai
+anthropic
+google-generativeai
+gunicorn
+
