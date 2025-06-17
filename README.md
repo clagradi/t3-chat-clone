@@ -1,7 +1,5 @@
 # 🚀 T3 Chat Clone - Contest Submission
 
-> **Un clone completo e funzionale di t3.chat con autenticazione, chiavi API personali e integrazione AI reale**
-
 [![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](http://localhost:5173)
 [![Backend](https://img.shields.io/badge/Backend-Flask-blue)](http://localhost:5000)
 [![Frontend](https://img.shields.io/badge/Frontend-React-61dafb)](https://reactjs.org/)
