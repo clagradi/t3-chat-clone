@@ -32,7 +32,6 @@ function App() {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [selectedModel, setSelectedModel] = useState('Gemini 2.5 Flash')
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [chatHistory, setChatHistory] = useState([])
   const [currentSessionId, setCurrentSessionId] = useState(null)
@@ -375,20 +374,6 @@ function App() {
     setInputMessage(prompt)
   }
 
-  // Theme toggle function
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-    localStorage.setItem('darkMode', !isDarkMode)
-  }
-
-  // Load theme preference on app start
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('darkMode')
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme === 'true')
-    }
-  }, [])
-
   // API Keys management functions
   const loadApiKeys = async () => {
     try {
@@ -552,6 +537,12 @@ function App() {
             </Button>
           </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <Input
@@ -560,7 +551,7 @@ function App() {
                 value={formData.username}
                 onChange={(e) => setFormData({...formData, username: e.target.value})}
                 required
-                className="border-purple-300 focus:border-purple-500"
+                className="w-full"
               />
             </div>
             
@@ -572,7 +563,7 @@ function App() {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
-                  className="border-purple-300 focus:border-purple-500"
+                  className="w-full"
                 />
               </div>
             )}
@@ -584,20 +575,16 @@ function App() {
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
-                className="border-purple-300 focus:border-purple-500"
+                className="w-full"
               />
             </div>
-
-            {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
-            )}
-
-            <Button
-              type="submit"
+            
+            <Button 
+              type="submit" 
               disabled={loading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full bg-purple-600 hover:bg-purple-700"
             >
-              {loading ? 'Please wait...' : (showLogin ? 'Login' : 'Register')}
+              {loading ? 'Loading...' : (showLogin ? 'Login' : 'Register')}
             </Button>
           </form>
         </div>
@@ -605,269 +592,274 @@ function App() {
     )
   }
 
-  // Main chat UI (same as before but with authentication)
+  // Main Chat UI
   return (
-    <div className={`min-h-screen flex ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-purple-50 to-pink-50'}`}>
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-purple-200'} border-r flex flex-col`}>
-        {/* Sidebar Header */}
-        <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-purple-200'}`}>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">T3</span>
-            </div>
-            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>T3 Chat</span>
-          </div>
-          
-          <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={handleNewChat}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Chat
-          </Button>
-        </div>
-
-        {/* Search */}
-        <div className="p-4">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <Input 
-              placeholder="Search your threads..." 
-              className="pl-10 bg-purple-50 border-purple-200"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50"
+         onDragOver={handleDragOver}
+         onDragLeave={handleDragLeave}
+         onDrop={handleDrop}>
+      
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 bg-purple-500 bg-opacity-20 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg">
+            <Paperclip className="w-12 h-12 text-purple-500 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-900">Drop files here to upload</p>
           </div>
         </div>
+      )}
 
-        {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {chatHistory.map((chat) => (
-            <div 
-              key={chat.id} 
-              className="p-3 rounded-lg hover:bg-purple-50 cursor-pointer mb-2"
-              onClick={() => loadMessages(chat.id)}
-            >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-900 truncate">{chat.title}</span>
+      <div className="flex h-screen">
+        {/* Sidebar */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-2">
+                  <span className="text-white font-bold text-sm">T3</span>
+                </div>
+                <h1 className="text-lg font-semibold text-gray-900">T3 Chat</h1>
               </div>
-              <span className="text-xs text-gray-500 ml-6">
-                {new Date(chat.updated_at).toLocaleDateString()}
-              </span>
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
+                  <Settings className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          ))}
+            
+            <Button 
+              onClick={handleNewChat}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Chat
+            </Button>
+          </div>
+
+          {/* Search */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input 
+                placeholder="Search your threads..." 
+                className="pl-10 bg-gray-50 border-gray-200"
+              />
+            </div>
+          </div>
+
+          {/* Chat History */}
+          <div className="flex-1 overflow-y-auto">
+            {chatHistory.map((session) => (
+              <div
+                key={session.id}
+                onClick={() => loadMessages(session.id)}
+                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                  currentSessionId === session.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
+                }`}
+              >
+                <div className="flex items-center">
+                  <MessageSquare className="w-4 h-4 text-gray-400 mr-2" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {session.title || 'New Chat'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(session.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* User Info */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                <User className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.username}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-purple-200">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-purple-600" />
-              <span className="text-sm text-gray-900">{user?.username}</span>
-            </div>
-            <div className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                {isDarkMode ? <Sun className="w-4 h-4 text-purple-600" /> : <Moon className="w-4 h-4 text-purple-600" />}
+        {/* Main Content */}
+        <div className="flex-1 bg-white flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xl font-semibold text-gray-900">How can I help you?</h2>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm">
+                <Menu className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
-                <Settings className="w-4 h-4 text-purple-600" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 text-purple-600" />
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b border-purple-200 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu className="w-4 h-4" />
-            </Button>
-            <h1 className="text-xl font-semibold text-gray-900">
-              How can I help you?
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={toggleTheme}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {messages.length === 0 ? (
+              <div className="max-w-4xl mx-auto">
+                {/* Category Buttons */}
+                <div className="flex flex-wrap gap-3 mb-8">
+                  <Button 
+                    variant="outline" 
+                    className="bg-pink-50 border-pink-200 text-pink-700 hover:bg-pink-100"
+                    onClick={() => handlePromptClick("Create a marketing plan for my startup")}
+                  >
+                    ✨ Create
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                    onClick={() => handlePromptClick("Analyze this data and provide insights")}
+                  >
+                    📊 Explore
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                    onClick={() => handlePromptClick("Write a Python function to solve this problem")}
+                  >
+                    💻 Code
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                    onClick={() => handlePromptClick("Explain quantum physics in simple terms")}
+                  >
+                    🎓 Learn
+                  </Button>
+                </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-purple-50 to-pink-50">
-          {messages.length === 0 ? (
-            <div className="max-w-4xl mx-auto">
-              {/* Category Buttons */}
-              <div className="flex gap-4 justify-center mb-8">
-                <Button variant="outline" className="bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200">
-                  ✨ Create
-                </Button>
-                <Button variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200">
-                  📊 Explore
-                </Button>
-                <Button variant="outline" className="bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200">
-                  💻 Code
-                </Button>
-                <Button variant="outline" className="bg-green-100 text-green-700 border-green-300 hover:bg-green-200">
-                  🎓 Learn
-                </Button>
+                {/* Suggested Prompts */}
+                <div className="space-y-3">
+                  <div 
+                    className="p-4 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                    onClick={() => handlePromptClick("How does AI work?")}
+                  >
+                    <p className="text-orange-800 font-medium">How does AI work?</p>
+                  </div>
+                  
+                  <div 
+                    className="p-4 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
+                    onClick={() => handlePromptClick("Are black holes real?")}
+                  >
+                    <p className="text-green-800 font-medium">Are black holes real?</p>
+                  </div>
+                  
+                  <div 
+                    className="p-4 bg-pink-50 border border-pink-200 rounded-lg cursor-pointer hover:bg-pink-100 transition-colors"
+                    onClick={() => handlePromptClick('How many Rs are in the word "strawberry"?')}
+                  >
+                    <p className="text-pink-800 font-medium">How many Rs are in the word "strawberry"?</p>
+                  </div>
+                  
+                  <div 
+                    className="p-4 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => handlePromptClick("What is the meaning of life?")}
+                  >
+                    <p className="text-blue-800 font-medium">What is the meaning of life?</p>
+                  </div>
+                </div>
               </div>
-
-              {/* Suggested Prompts */}
-              <div className="space-y-3">
-                {[
-                  'How does AI work?',
-                  'Are black holes real?',
-                  'How many Rs are in the word "strawberry"?',
-                  'What is the meaning of life?'
-                ].map((prompt, index) => {
-                  const colors = [
-                    'border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800',
-                    'border-green-300 bg-green-50 hover:bg-green-100 text-green-800', 
-                    'border-pink-300 bg-pink-50 hover:bg-pink-100 text-pink-800',
-                    'border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-800'
-                  ]
-                  return (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className={`w-full text-left justify-start h-auto p-4 ${colors[index]}`}
-                      onClick={() => handlePromptClick(prompt)}
-                    >
-                      {prompt}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-4xl mx-auto space-y-6">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-3xl p-4 rounded-lg ${
-                    message.sender === 'user' 
-                      ? 'bg-purple-600 text-white' 
-                      : 'bg-white border border-purple-200 text-gray-900 shadow-sm'
-                  }`}>
-                    {/* Attachments */}
-                    {message.attachments && message.attachments.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex flex-wrap gap-2">
+            ) : (
+              <div className="max-w-4xl mx-auto space-y-6">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-3xl p-4 rounded-lg ${
+                      message.sender === 'user' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-100 text-gray-900'
+                    }`}>
+                      {message.attachments && message.attachments.length > 0 && (
+                        <div className="mb-3">
                           {message.attachments.map((attachment) => (
-                            <div key={attachment.id} className="flex items-center bg-purple-100 rounded-lg p-2 text-sm">
-                              {attachment.file_type.startsWith('image/') ? (
-                                <img 
-                                  src={`${API_URL}/api/attachments/file/${attachment.id}`}
-                                  alt={attachment.filename}
-                                  className="max-w-xs max-h-48 rounded object-cover"
-                                />
-                              ) : (
-                                <span className="text-purple-800">📎 {attachment.filename}</span>
-                              )}
+                            <div key={attachment.id} className="flex items-center mb-2">
+                              <Paperclip className="w-4 h-4 mr-2" />
+                              <span className="text-sm">{attachment.filename}</span>
                             </div>
                           ))}
                         </div>
-                      </div>
-                    )}
-                    <MessageRenderer text={message.text} />
-                    <span className="text-xs opacity-70 mt-2 block">{message.timestamp}</span>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Streaming Message */}
-              {isStreaming && streamingMessage && (
-                <div className="flex justify-start">
-                  <div className="max-w-3xl p-4 rounded-lg bg-white border border-purple-200 text-gray-900 shadow-sm">
-                    <MessageRenderer text={streamingMessage} />
-                    <div className="flex items-center mt-2">
-                      <div className="animate-pulse flex space-x-1">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                      </div>
-                      <span className="text-xs text-purple-600 ml-2">AI sta scrivendo...</span>
+                      )}
+                      <MessageRenderer text={message.text} />
+                      <span className="text-xs opacity-70 mt-2 block">{message.timestamp}</span>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Input Area */}
-        <div 
-          className={`bg-white border-t border-purple-200 p-4 ${isDragging ? 'bg-purple-50 border-purple-400' : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className="max-w-4xl mx-auto">
-            {error && (
-              <div className="text-red-600 text-sm mb-2">{error}</div>
+                ))}
+                
+                {/* Streaming message */}
+                {isStreaming && (
+                  <div className="flex justify-start">
+                    <div className="max-w-3xl p-4 rounded-lg bg-gray-100 text-gray-900">
+                      <MessageRenderer text={streamingMessage} />
+                      <div className="flex items-center mt-2">
+                        <div className="animate-pulse flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        </div>
+                        <span className="text-xs text-gray-500 ml-2">AI is typing...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-            
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t border-gray-200 p-4 bg-white">
+            {/* Attachments Preview */}
+            {attachments.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {attachments.map((attachment) => (
+                  <div key={attachment.id} className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                    <Paperclip className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="text-sm text-gray-700">{attachment.filename}</span>
+                    <button
+                      onClick={() => removeAttachment(attachment.id)}
+                      className="ml-2 text-gray-400 hover:text-gray-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Upload Progress */}
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mb-4">
-                <div className="bg-purple-200 rounded-full h-2">
+                <div className="bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   ></div>
                 </div>
-                <p className="text-sm text-purple-600 mt-1">Caricamento in corso... {uploadProgress}%</p>
               </div>
             )}
 
-            {/* Attachments Preview */}
-            {attachments.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center bg-purple-100 rounded-lg p-2 text-sm">
-                      <span className="text-purple-800">{attachment.filename}</span>
-                      <button 
-                        onClick={() => removeAttachment(attachment.id)}
-                        className="ml-2 text-purple-600 hover:text-purple-800"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {isDragging && (
-              <div className="mb-4 p-8 border-2 border-dashed border-purple-400 rounded-lg text-center">
-                <p className="text-purple-600 font-medium">Rilascia i file qui per caricarli</p>
-                <p className="text-sm text-purple-500">Supportati: immagini, PDF, documenti</p>
-              </div>
-            )}
-
-            <div className="flex items-end gap-4">
+            <div className="flex items-end space-x-3">
               <div className="flex-1">
                 <Textarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Type your message here..."
-                  className="min-h-[60px] resize-none border-purple-300 focus:border-purple-500 bg-purple-50"
+                  className="min-h-[60px] resize-none border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -876,46 +868,53 @@ function App() {
                   }}
                 />
               </div>
-              <div className="flex flex-col gap-2">
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => handleFileUpload(Array.from(e.target.files))}
+                  className="hidden"
+                  id="file-upload"
+                />
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('file-upload').click()}
+                  className="border-gray-200 hover:bg-gray-50"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+                
+                <Button 
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() && attachments.length === 0}
                   className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
-                <label className="cursor-pointer">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    onChange={(e) => handleFileUpload(Array.from(e.target.files))}
-                    accept="image/*,.pdf,.doc,.docx,.txt"
-                  />
-                  <Button variant="outline" size="sm" className="border-purple-300 text-purple-600 hover:bg-purple-50" asChild>
-                    <span>
-                      <Paperclip className="w-4 h-4" />
-                    </span>
-                  </Button>
-                </label>
               </div>
             </div>
-            
+
             {/* Model Selection */}
-            <div className="flex items-center gap-4 mt-4">
-              <select 
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="bg-purple-100 border border-purple-300 rounded-md px-3 py-2 text-sm text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[200px]"
-              >
-                {models.map((model) => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </select>
-              <Button variant="outline" size="sm" className="border-purple-300 text-purple-600 hover:bg-purple-50">
-                Search
-              </Button>
-              <span className="text-xs text-gray-500">Selected: {selectedModel}</span>
+            <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-4">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="bg-transparent border border-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:border-purple-500"
+                >
+                  {models.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
+                
+                <Button variant="outline" size="sm" className="border-gray-200 hover:bg-gray-50">
+                  Search
+                </Button>
+              </div>
+              
+              <span className="text-xs">Selected: {selectedModel}</span>
             </div>
           </div>
         </div>
@@ -924,87 +923,71 @@ function App() {
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Impostazioni API</h2>
-              <Button variant="ghost" onClick={() => setShowSettings(false)}>
-                ✕
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">API Keys Settings</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+                ×
               </Button>
             </div>
 
-            {/* Current API Keys */}
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Chiavi API Configurate</h3>
-              {apiKeys.length === 0 ? (
-                <p className="text-gray-500 text-sm">Nessuna chiave API configurata</p>
-              ) : (
-                <div className="space-y-2">
-                  {apiKeys.map((key) => (
-                    <div key={key.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                      <div>
-                        <span className="font-medium text-gray-900">{key.provider}</span>
-                        <span className="text-sm text-gray-500 ml-2">{key.api_key_preview}</span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => deleteApiKey(key.id)}
-                        className="text-red-600 border-red-300 hover:bg-red-50"
-                      >
-                        Elimina
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Add New API Key */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Aggiungi Nuova Chiave API</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
-                  <select
-                    value={newApiKey.provider}
-                    onChange={(e) => setNewApiKey({...newApiKey, provider: e.target.value})}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Seleziona provider</option>
-                    <option value="openai">OpenAI (GPT-4o)</option>
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="google">Google (Gemini)</option>
-                    <option value="deepseek">DeepSeek</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chiave API</label>
-                  <Input
-                    type="password"
-                    value={newApiKey.api_key}
-                    onChange={(e) => setNewApiKey({...newApiKey, api_key: e.target.value})}
-                    placeholder="Inserisci la tua chiave API"
-                    className="w-full"
-                  />
-                </div>
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Add New API Key</h4>
+              <div className="space-y-3">
+                <select
+                  value={newApiKey.provider}
+                  onChange={(e) => setNewApiKey({...newApiKey, provider: e.target.value})}
+                  className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">Select Provider</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Anthropic</option>
+                  <option value="google">Google</option>
+                </select>
+                
+                <Input
+                  type="password"
+                  placeholder="API Key"
+                  value={newApiKey.api_key}
+                  onChange={(e) => setNewApiKey({...newApiKey, api_key: e.target.value})}
+                  className="w-full"
+                />
+                
                 <Button 
                   onClick={addApiKey}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
                 >
-                  Salva Chiave API
+                  Add API Key
                 </Button>
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-md">
-              <h4 className="font-medium text-blue-900 mb-2">Come ottenere le chiavi API:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• <strong>OpenAI:</strong> Vai su platform.openai.com → API keys</li>
-                <li>• <strong>Anthropic:</strong> Vai su console.anthropic.com → API keys</li>
-                <li>• <strong>Google:</strong> Vai su aistudio.google.com → Get API key</li>
-                <li>• <strong>DeepSeek:</strong> Vai su platform.deepseek.com → API keys</li>
-              </ul>
+            {/* Existing API Keys */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Your API Keys</h4>
+              <div className="space-y-2">
+                {apiKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 capitalize">{key.provider}</p>
+                      <p className="text-xs text-gray-500">••••••••{key.api_key.slice(-4)}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteApiKey(key.id)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                ))}
+                
+                {apiKeys.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">No API keys configured</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
